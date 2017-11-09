@@ -3,13 +3,57 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(feather)
 library(slam)
 library(text2vec)
-library(stringi)
+library(stringr)
 library(dplyr)
 library(tokenizers)
+library(tidyverse)
+library(tm)
 
 data <- read_feather('C:/Users/Samuel/OneDrive/UvA/S01P02/Machine Learning for Econometrics/Project/Data/ph_ads_payment_indicator.feather')
 
 sample <- data %>%
   mutate(rnd = runif(dim(data)[1], min = 0, max = 1)) %>%
-  filter(rnd < 0.05)
+  filter(rnd < 0.01)
+
+prep_fun <- function(x){
+  #the preprocessing function, which will transfer all inputs to
+  #lower, replace 1 and 2 letter words, replace white spaces and digits 
+  
+  x <- tolower(x)
+  x <- str_replace_all(x, '\\b\\w{1,2}\\b', '')
+  x <- str_replace_all(x, '[:digit:]', '')
+  x <- str_replace_all(x, '\\s+', ' ')
+}
+
+tok_fun <- word_tokenizer
+
+it_sample <- itoken(sample$description, 
+                    preprocessor = prep_fun,
+                    tokenizer = tok_fun,
+                    ids = sample$id)
+
+vocab <- create_vocabulary(it_sample, 
+                           stopwords = stopwords('en'))
+
+vocab
+
+pruned_vocab <- prune_vocabulary(vocab,
+                                 term_count_min = 10, 
+                                 doc_proportion_max = 0.7,
+                                 doc_proportion_min = 0.001)
+
+
+vectorizer <- vocab_vectorizer(pruned_vocab)
+t1 <- Sys.time()
+dtm_train <- create_dtm(it_sample, vectorizer)
+print(difftime(Sys.time(), t1, units = 'sec'))
+
+dim(dtm_train)
+dtm_train <- dtm_train[row_sums(dtm_train) > 0,]
+
+
+
+
+
+
 
