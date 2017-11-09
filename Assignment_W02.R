@@ -49,11 +49,19 @@ dtm_train <- create_dtm(it_sample, vectorizer)
 print(difftime(Sys.time(), t1, units = 'sec'))
 
 dim(dtm_train)
-dtm_train <- dtm_train[row_sums(dtm_train) > 0,]
+dtm_train <- dtm_train[row_sums(dtm_train) > 0, ]
 
+sort(col_sums(dtm_train), decreasing = T)[1:10]
 
+#TF-IDF
+dtm_train <- as.tbl(as.data.frame(as.matrix(dtm_train)))
 
+tf_dtm_train <- sweep(dtm_train, 1, row_sums(dtm_train), '/')
+tf <- sapply(tf_dtm_train, mean)
+idf <- log2(dim(dtm_train)[1] / (col_sums(dtm_train)))
 
+tf_idf <- tf * idf
+summary(tf_idf)
 
-
+dtm_train <- dtm_train[, tf_idf > 0.0012]
 
