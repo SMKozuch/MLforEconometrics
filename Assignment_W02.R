@@ -8,8 +8,11 @@ library(dplyr)
 library(tokenizers)
 library(tidyverse)
 library(tm)
+library(profvis)
+library(MASS)
 
-sample_size <- 0.05
+
+sample_size <- 0.1
 
 data <- read_feather('C:/Users/Samuel/OneDrive/UvA/S01P02/Machine Learning for Econometrics/Project/Data/ph_ads_payment_indicator.feather')
 
@@ -17,13 +20,15 @@ sample <- data %>%
   mutate(rnd = runif(dim(data)[1], min = 0, max = 1)) %>%
   filter(rnd < sample_size)
 
+rm(data)
+
 prep_fun <- function(x){
   #the preprocessing function, which will transfer all inputs to
   #lower, replace 1 and 2 letter words, replace white spaces and digits 
   
   x <- tolower(x)
-  x <- str_replace_all(x, '\\b\\w{1,2}\\b', '')
   x <- str_replace_all(x, '[:digit:]', '')
+  x <- str_replace_all(x, '\\b\\w{1,2}\\b', '')
   x <- str_replace_all(x, '\\s+', ' ')
 }
 
@@ -55,8 +60,14 @@ dtm_train <- dtm_train[row_sums(dtm_train) > 0, ]
 
 sort(col_sums(dtm_train), decreasing = T)[1:10]
 
+rm(sample, vocab, pruned_vocab)
+
 #TF-IDF
-dtm_train <- as.tbl(as.data.frame(as.matrix(dtm_train)))
+dtm_train <- as.matrix(dtm_train)
+dtm_train <- as.data.frame(dtm_train)
+dtm_train <- as.tbl(dtm_train)
+
+write.matrix(dtm_train, 'tbl.csv', sep = '|')
 
 tf_dtm_train <- sweep(dtm_train, 1, row_sums(dtm_train), '/')
 tf <- sapply(tf_dtm_train, mean)
@@ -64,6 +75,9 @@ idf <- log2(dim(dtm_train)[1] / (col_sums(dtm_train)))
 
 tf_idf <- tf * idf
 summary(tf_idf)
+
+
+
 
 dtm_train <- dtm_train[, tf_idf > 0.0012]
 
