@@ -9,11 +9,13 @@ library(tokenizers)
 library(tidyverse)
 library(tm)
 
+sample_size <- 0.05
+
 data <- read_feather('C:/Users/Samuel/OneDrive/UvA/S01P02/Machine Learning for Econometrics/Project/Data/ph_ads_payment_indicator.feather')
 
 sample <- data %>%
   mutate(rnd = runif(dim(data)[1], min = 0, max = 1)) %>%
-  filter(rnd < 0.01)
+  filter(rnd < sample_size)
 
 prep_fun <- function(x){
   #the preprocessing function, which will transfer all inputs to
