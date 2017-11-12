@@ -12,9 +12,9 @@ library(profvis)
 library(MASS)
 
 
-sample_size <- 0.1
+sample_size <- 1
 
-data <- read_feather('C:/Users/Samuel/OneDrive/UvA/S01P02/Machine Learning for Econometrics/Project/Data/ph_ads_payment_indicator.feather')
+data <- read_feather('C:/Users/Samuel/Documents/ML_Naspers/Data/ph_ads_payment_indicator.feather')
 
 sample <- data %>%
   mutate(rnd = runif(dim(data)[1], min = 0, max = 1)) %>%
@@ -63,21 +63,22 @@ sort(col_sums(dtm_train), decreasing = T)[1:10]
 rm(sample, vocab, pruned_vocab)
 
 #TF-IDF
-dtm_train <- as.matrix(dtm_train)
-dtm_train <- as.data.frame(dtm_train)
-dtm_train <- as.tbl(dtm_train)
-
-write.matrix(dtm_train, 'tbl.csv', sep = '|')
-
+# dtm_train[, 'rs'] <- row_sums(dtm_train)
+# 
 tf_dtm_train <- sweep(dtm_train, 1, row_sums(dtm_train), '/')
-tf <- sapply(tf_dtm_train, mean)
-idf <- log2(dim(dtm_train)[1] / (col_sums(dtm_train)))
+# tf <- sapply(tf_dtm_train, mean)
+# idf <- log2(dim(dtm_train)[1] / (col_sums(dtm_train)))
+# 
+# tf_idf <- tf * idf
+# summary(tf_idf)
+# 
+# 
+# 
+# 
+# dtm_train <- dtm_train[, tf_idf > 0.0012]
 
-tf_idf <- tf * idf
-summary(tf_idf)
 
+library(wordcloud)
+freq = data.frame(freqterms=sort(colSums(as.matrix(dtm_train)), decreasing=TRUE))
 
-
-
-dtm_train <- dtm_train[, tf_idf > 0.0012]
-
+wordcloud(rownames(freq), freq[,1], max.words=50, colors=brewer.pal(3, "Dark2"))
