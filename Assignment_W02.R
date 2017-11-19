@@ -12,7 +12,7 @@ library(profvis)
 library(MASS)
 
 
-sample_size <- 1
+sample_size <- 0.005
 
 data <- read_feather('C:/Users/Samuel/Documents/ML_Naspers/Data/ph_ads_payment_indicator.feather')
 
@@ -27,9 +27,11 @@ prep_fun <- function(x){
   #lower, replace 1 and 2 letter words, replace white spaces and digits 
   
   x <- tolower(x)
-  x <- str_replace_all(x, '[:digit:]', '')
-  x <- str_replace_all(x, '\\b\\w{1,2}\\b', '')
+  x <- str_replace_all(x, '[:digit:]', ' ')
+  x <- str_replace_all(x, '\\b\\w{1,2}\\b',' ')
+  x <- str_replace_all(x, '[:punct:]', ' ' )
   x <- str_replace_all(x, '\\s+', ' ')
+  return(x)
 }
 
 tok_fun <- word_tokenizer
@@ -66,16 +68,18 @@ rm(sample, vocab, pruned_vocab)
 # dtm_train[, 'rs'] <- row_sums(dtm_train)
 # 
 tf_dtm_train <- sweep(dtm_train, 1, row_sums(dtm_train), '/')
-# tf <- sapply(tf_dtm_train, mean)
-# idf <- log2(dim(dtm_train)[1] / (col_sums(dtm_train)))
-# 
-# tf_idf <- tf * idf
-# summary(tf_idf)
-# 
-# 
-# 
-# 
-# dtm_train <- dtm_train[, tf_idf > 0.0012]
+tf <- apply(tf_dtm_train, 2, mean)
+rm(tf_dtm_train)
+
+idf <- log2(dim(dtm_train)[1] / (col_sums(dtm_train)))
+
+tf_idf <- tf * idf
+summary(tf_idf)
+
+
+
+
+dtm_train <- dtm_train[, tf_idf > median(tf_idf) + 1e-4]
 
 
 library(wordcloud)
